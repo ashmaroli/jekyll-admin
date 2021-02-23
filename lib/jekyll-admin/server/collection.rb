@@ -32,6 +32,7 @@ module JekyllAdmin
 
         write_file write_path, document_body
         delete_file(draft_path) if request_payload["published"]
+        ensure_assets_directory
 
         json written_file.to_api(:include_content => true)
       end
@@ -39,6 +40,7 @@ module JekyllAdmin
       delete "/:collection_id/*?/?:path.:ext" do
         ensure_requested_file
         delete_file path
+        remove_assets_directory
         content_type :json
         status 200
         halt
@@ -68,6 +70,26 @@ module JekyllAdmin
         ensure_collection
         render_404 unless Dir.exist?(directory_path)
       end
+
+
+      def ensure_assets_directory
+        unless Dir.exist?(assets_directory_path)
+          Dir.mkdir(assets_directory_path)
+        end
+      end
+
+      def remove_assets_directory
+        if Dir.exist?(assets_directory_path)
+          FileUtils.rm_rf(assets_directory_path)
+        end
+
+      end
+
+      def assets_directory_path
+        File.join( site.source, 'assets', 'posts', filename.gsub(/.md$/,'') )
+      end
+
+
 
       def entries
         args = {
